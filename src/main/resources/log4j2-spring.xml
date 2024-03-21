@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration xmlns:xi="http://www.w3.org/2001/XInclude" packages="com.fortinet" status="WARN">
+
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%style{%d{ISO8601}}{black} %highlight{%-5level }[%style{%t}{bright,blue}] %style{%C{1.}}{bright,yellow}: %msg%n%throwable" />
+        </Console>
+
+        <!--<Console name="Console-Extensions" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%d %p %c{1.} [%t] ${spring:spring.application.name} %m%n" />
+        </Console>-->
+
+        <MapAppender name="MapAppender" />
+
+        <RollingFile name="RollingFile"
+                     fileName="./logs/spring-boot-logger-log4j2.log"
+                     filePattern="./logs/$${date:yyyy-MM}/spring-boot-logger-log4j2-%d{yyyy-MM-dd-HH-mm}-%i.log.gz">
+            <PatternLayout>
+                <pattern>%d %p %C{1.} [%t] %m%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy
+                        size="10 MB" />
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+            </Policies>
+        </RollingFile>
+
+        <!--<JDBC name="AuditAppenderDB" tableName="AUDIT_LOGS">
+            <ConnectionFactory class="com.wkrzywiec.spring.library.config.LogsConnectionFactory" method="getDatabaseConnection" />
+            <Column name="level" pattern="%level"/>
+            <Column name="username" pattern="%X{username}"/>
+            <Column name="field" pattern="%X{field}"/>
+            <Column name="from_value" pattern="%X{from_value}"/>
+            <Column name="to_value" pattern="%X{to_value}"/>
+            <Column name="message" pattern="%message"/>
+        </JDBC>-->
+
+    </Appenders>
+
+    <Loggers>
+        <!-- LOG everything at INFO level -->
+        <Root level="debug">
+            <AppenderRef ref="Console" />
+        </Root>
+        <Logger name="auditLogger" level="info">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="RollingFile" />
+            <!--<AppenderRef ref="AuditAppenderDB" />-->
+            <AppenderRef ref="MapAppender" />
+        </Logger>
+        <!-- LOG "com.fortinet*" at TRACE level -->
+        <!--<SpringProfile name="!development, !production">
+            <Logger name="com.fortinet" level="trace"></Logger>
+        </SpringProfile>
+
+        <SpringProfile name="development">
+            <Logger name="com.fortinet.extensions" level="debug"></Logger>
+        </SpringProfile>
+
+        <SpringProfile name="production">
+            <Logger name="com.fortinet.extensions" level="error">
+                <AppenderRef ref="Console-Extensions" />
+            </Logger>
+        </SpringProfile>-->
+
+    </Loggers>
+
+</Configuration>

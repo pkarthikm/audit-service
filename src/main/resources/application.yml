@@ -1,0 +1,24 @@
+server:
+  port : 5000
+  servlet:
+    context-path: /audit-service
+  error:
+    include-message: always
+spring:
+  sql:
+    init:
+      mode: always
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    generate-ddl: true
+    show-sql: true
+  datasource:
+    url: "jdbc:postgresql://localhost:5432/audit"
+    username: audit_service
+    password: audit_service
+    hikari:
+      data-source-properties:
+        useUnicode: true
+        characterEncoding: UTF-8
