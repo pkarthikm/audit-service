@@ -3,8 +3,10 @@ package com.fortinet.auditservice.service;
 import com.fortinet.auditservice.entity.AuditLogEntity;
 import com.fortinet.auditservice.enums.Status;
 import com.fortinet.auditservice.interfaces.AuditLogService;
+import com.fortinet.auditservice.interfaces.ConversionService;
 import com.fortinet.auditservice.model.AuditLog;
 import com.fortinet.auditservice.repository.AuditLogRepository;
+import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +26,9 @@ public class AuditLogServiceImpl implements AuditLogService {
 
     @Autowired
     private AuditLogRepository auditLogRepository;
+
+    @Autowired
+    private ConversionService conversionService;
 
     private AuditLog auditLogFromEntity(@NonNull AuditLogEntity auditLogEntity) {
         Long id = auditLogEntity.getId();
@@ -45,9 +50,16 @@ public class AuditLogServiceImpl implements AuditLogService {
         if( null == entityName || entityName.isEmpty())
             return null;
 
-        Status status = auditLogEntity.getStatus();
-        if( null == status)
+        String statusStr = auditLogEntity.getStatus();
+        if( null == statusStr || statusStr.isEmpty())
             return null;
+        Status status = null;
+        try {
+            status = Status.valueOf(statusStr);
+        } catch (IllegalArgumentException e) {
+            LOG.error("Invalid Status value: " + statusStr);
+            return null;
+        }
 
         String actorUserId = auditLogEntity.getActorUserId();
         if( null == actorUserId || actorUserId.isEmpty())
@@ -61,9 +73,12 @@ public class AuditLogServiceImpl implements AuditLogService {
 
         String actorIpAddress = auditLogEntity.getActorIpAddress();
 
-        Map<String, String> parameters = auditLogEntity.getParameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        Map<String, String> priorState = auditLogEntity.getPriorState().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        Map<String, String> resultingState = auditLogEntity.getResultingState().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        String parametersStr = auditLogEntity.getParameters();
+        Map<String, String> parameters = conversionService.convertStringToStringStringMap(parametersStr);
+        String priorStateStr = auditLogEntity.getPriorState();
+        Map<String, String> priorState = conversionService.convertStringToStringStringMap(priorStateStr);
+        String resultingStateStr = auditLogEntity.getResultingState();
+        Map<String, String> resultingState = conversionService.convertStringToStringStringMap(resultingStateStr);
 
         String apiPath = auditLogEntity.getApiPath();
         if( null == apiPath || apiPath.isEmpty())
@@ -71,7 +86,10 @@ public class AuditLogServiceImpl implements AuditLogService {
 
         String clusterId = auditLogEntity.getClusterId();
         String errorDescription = auditLogEntity.getErrorDescription();
-        Integer errorStatusCode = auditLogEntity.getErrorStatusCode();
+        String errorStatusCodeStr = auditLogEntity.getErrorStatusCode();
+        Integer errorStatusCode = null;
+        if(null != errorStatusCodeStr && !errorStatusCodeStr.isEmpty())
+            errorStatusCode = Integer.valueOf(errorStatusCodeStr);
         Date created = auditLogEntity.getCreated();
 
         return AuditLog.builder()
@@ -111,6 +129,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     @Override
+    @Transactional
     public void save(@NonNull AuditLog auditLog) throws IllegalArgumentException {
         Date timestamp = auditLog.getTimestamp();
 
@@ -140,8 +159,11 @@ public class AuditLogServiceImpl implements AuditLogService {
         String actorIpAddress = auditLog.getActorIpAddress();
 
         Map<String, String> parameters = auditLog.getParameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        String parametersStr = conversionService.convertStringStringMapToString(parameters);
         Map<String, String> priorState = auditLog.getPriorState().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        String priorStateStr = conversionService.convertStringStringMapToString(priorState);
         Map<String, String> resultingState = auditLog.getResultingState().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        String resultingStateStr = conversionService.convertStringStringMapToString(resultingState);
 
         String apiPath = auditLog.getApiPath();
         if(apiPath.isEmpty())
@@ -150,30 +172,34 @@ public class AuditLogServiceImpl implements AuditLogService {
         String clusterId = auditLog.getClusterId();
         String errorDescription = auditLog.getErrorDescription();
         Integer errorStatusCode = auditLog.getErrorStatusCode();
+        String errorStatusCodeStr = null;
+        if (null != errorStatusCode)
+            errorStatusCodeStr = errorStatusCode.toString();
         Date created = auditLog.getCreated();
 
-        AuditLogEntity auditLogEntity = auditLogRepository.save(AuditLogEntity.builder()
+        auditLogRepository.save(AuditLogEntity.builder()
                 .timestamp(timestamp)
                 .eventName(eventName)
                 .tenantName(tenantName)
                 .entityName(entityName)
-                .status(status)
+                .status(status.name())
                 .actorUserId(actorUserId)
                 .actorSessionId(actorSessionId)
                 .actorClient(actorClient)
                 .actorIpAddress(actorIpAddress)
-                .parameters(parameters)
-                .priorState(priorState)
-                .resultingState(resultingState)
+                .parameters(parametersStr)
+                .priorState(priorStateStr)
+                .resultingState(resultingStateStr)
                 .apiPath(apiPath)
                 .clusterId(clusterId)
                 .errorDescription(errorDescription)
-                .errorStatusCode(errorStatusCode)
+                .errorStatusCode(errorStatusCodeStr)
                 .created(created)
                 .build());
     }
 
     @Override
+    @Transactional
     public AuditLog getAuditLogById(Long id) {
         if(id <= 0L)
             return null;
@@ -182,6 +208,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     @Override
+    @Transactional
     public Page<AuditLog> getAuditLogsByEventName(@NonNull String eventName, Pageable pageable) {
         Page<AuditLogEntity> pagedResult = auditLogRepository.findAllByEventName(eventName, pageable);
         if (pagedResult.hasContent()) {
@@ -196,6 +223,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     @Override
+    @Transactional
     public Page<AuditLog> getAuditLogsByEntityName(@NonNull String entityName, Pageable pageable) {
         Page<AuditLogEntity> pagedResult = auditLogRepository.findAllByEntityName(entityName, pageable);
         if (pagedResult.hasContent()) {
@@ -210,6 +238,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     @Override
+    @Transactional
     public Page<AuditLog> getAuditLogsByTenantName(@NonNull String tenantName, Pageable pageable) {
         Page<AuditLogEntity> pagedResult = auditLogRepository.findAllByTenantName(tenantName, pageable);
         if (pagedResult.hasContent()) {

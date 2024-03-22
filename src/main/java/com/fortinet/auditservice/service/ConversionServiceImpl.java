@@ -2,23 +2,15 @@ package com.fortinet.auditservice.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fortinet.auditservice.model.AuditLog;
-import com.fortinet.auditservice.util.EncryptionUtil;
-import jakarta.persistence.AttributeConverter;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.fortinet.auditservice.interfaces.ConversionService;
+import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
-public class StringStringMapEncrypt implements AttributeConverter<Map<String, String>,String> {
-    @Autowired
-    EncryptionUtil encryptionUtil;
+@Service
+public class ConversionServiceImpl implements ConversionService {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
-
     private String convertMapToString(Map<String, String> map) throws JsonProcessingException {
         if(map == null)
             return null;
@@ -37,7 +29,7 @@ public class StringStringMapEncrypt implements AttributeConverter<Map<String, St
     }
 
     @Override
-    public String convertToDatabaseColumn(Map<String, String> stringStringMap) {
+    public String convertStringStringMapToString(Map<String, String> stringStringMap) {
         if (stringStringMap == null)
             return null;
         if(stringStringMap.isEmpty())
@@ -50,7 +42,7 @@ public class StringStringMapEncrypt implements AttributeConverter<Map<String, St
     }
 
     @Override
-    public Map<String, String> convertToEntityAttribute(String s) {
+    public Map<String, String> convertStringToStringStringMap(String s) {
         if(s == null)
             return null;
         if(s.isEmpty())

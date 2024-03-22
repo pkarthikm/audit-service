@@ -1,7 +1,6 @@
 package com.fortinet.auditservice.entity;
 
-import com.fortinet.auditservice.enums.Status;
-import com.fortinet.auditservice.service.Encrypt;
+import com.fortinet.auditservice.service.StringEncrypt;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -9,8 +8,6 @@ import org.hibernate.annotations.Immutable;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 @Getter
 @Setter
@@ -44,50 +41,48 @@ public class AuditLogEntity implements Serializable {
     private String entityName; //The object name that was the subject of the event.
 
     @Column(nullable = false)
-    private Status status;
+    @Convert(converter = StringEncrypt.class)
+    private String status;
 
     @Column(nullable = false)
-    @Convert(converter = Encrypt.class)
+    @Convert(converter = StringEncrypt.class)
     private String actorUserId;
 
     @Column(nullable = false)
-    @Convert(converter = Encrypt.class)
+    @Convert(converter = StringEncrypt.class)
     private String actorSessionId; //Unique session identifier of the event actor.
 
-    @Convert(converter = Encrypt.class)
+    @Convert(converter = StringEncrypt.class)
     private String actorClient; //User agent of the client/platform in use by the event actor.
 
-    @Convert(converter = Encrypt.class)
+    @Convert(converter = StringEncrypt.class)
     private String actorIpAddress;
 
-    @ElementCollection
-    @MapKeyColumn(name="name")
-    @Column(name="value")
-    @CollectionTable(name="event_parameters", joinColumns=@JoinColumn(name="event_id"))
-    Map<String, String> parameters = new HashMap<>();
-
-    @ElementCollection
-    @MapKeyColumn(name="name")
-    @Column(name="value")
-    @CollectionTable(name="event_prior_state", joinColumns=@JoinColumn(name="event_id"))
-    Map<String, String> priorState = new HashMap<>();
-
-    @ElementCollection
-    @MapKeyColumn(name="name")
-    @Column(name="value")
-    @CollectionTable(name="event_resulting_state", joinColumns=@JoinColumn(name="event_id"))
-    Map<String, String> resultingState = new HashMap<>();
+    @Column(nullable = false)
+    @Convert(converter = StringEncrypt.class)
+    @Lob
+    private String parameters;
 
     @Column(nullable = false)
-    @Convert(converter = Encrypt.class)
+    @Convert(converter = StringEncrypt.class)
+    @Lob
+    private String priorState;
+
+    @Column(nullable = false)
+    @Convert(converter = StringEncrypt.class)
+    @Lob
+    private String resultingState;
+
+    @Column(nullable = false)
+    @Convert(converter = StringEncrypt.class)
     private String apiPath;
 
-    @Convert(converter = Encrypt.class)
+    @Convert(converter = StringEncrypt.class)
     private String clusterId;
-    @Convert(converter = Encrypt.class)
+    @Convert(converter = StringEncrypt.class)
     private String errorDescription;
-    @Convert(converter = Encrypt.class)
-    private Integer errorStatusCode;
+    @Convert(converter = StringEncrypt.class)
+    private String errorStatusCode;
 
     @CreationTimestamp
     private Date created;

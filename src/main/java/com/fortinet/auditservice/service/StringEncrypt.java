@@ -6,7 +6,7 @@ import jakarta.persistence.Converter;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Converter
-public class Encrypt implements AttributeConverter<String,String> {
+public class StringEncrypt implements AttributeConverter<String,String> {
     @Autowired
     EncryptionUtil encryptionUtil;
 
