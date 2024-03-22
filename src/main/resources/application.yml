@@ -1,7 +1,7 @@
 server:
   port : 5000
   servlet:
-    context-path: /audit-server
+    context-path: /audit-service
   error:
     include-message: always
 spring:
