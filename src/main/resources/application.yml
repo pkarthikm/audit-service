@@ -1,10 +1,14 @@
 server:
   port : 5000
   servlet:
-    context-path: /audit-service
+    context-path: /audit-server
   error:
     include-message: always
 spring:
+  security:
+    user:
+      name: admin
+      password: admin
   sql:
     init:
       mode: always
