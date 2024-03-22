@@ -16,8 +16,8 @@ spring:
     show-sql: true
   datasource:
     url: "jdbc:postgresql://localhost:5432/audit"
-    username: audit_service
-    password: audit_service
+    username: postgres
+    password: postgres
     hikari:
       data-source-properties:
         useUnicode: true
