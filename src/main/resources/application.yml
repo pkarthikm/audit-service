@@ -8,10 +8,6 @@ message:
   topic:
     name: notification
 spring:
-  security:
-    user:
-      name: admin
-      password: admin
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
