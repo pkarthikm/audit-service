@@ -12,6 +12,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,12 +22,24 @@ public class AuditLogController {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuditLogController.class);
     @Autowired
-    AuditLogService auditLogService;
+    private AuditLogService auditLogService;
 
     @GetMapping(value = "/")
     @ResponseBody
     public ResponseEntity<Page<AuditLog>> getAuditLogs(@PageableDefault(size = 10, sort = "timestamp", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(auditLogService.getAuditLogs(pageable));
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if(auth == null) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        LOG.info("User: " + auth.getName() + " is fetching audit logs");
+        auth.getAuthorities().forEach(a -> LOG.info("User: " + auth.getName() + " has role: " + a.getAuthority()));
+        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return ResponseEntity.ok(auditLogService.getAuditLogs(pageable));
+        } else if(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_USER"))) {
+            return ResponseEntity.ok(auditLogService.getAuditLogsByEntityName("PlayBook", pageable));
+        } else {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
     }
 
     @GetMapping(value = "/id/{id}")
