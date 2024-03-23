@@ -4,11 +4,22 @@ server:
     context-path: /audit-service
   error:
     include-message: always
+message:
+  topic:
+    name: notification
 spring:
   security:
     user:
       name: admin
       password: admin
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: audit-service
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   sql:
     init:
       mode: always
